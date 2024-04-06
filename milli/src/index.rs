@@ -177,11 +177,23 @@ impl Index {
         created_at: OffsetDateTime,
         updated_at: OffsetDateTime,
     ) -> Result<Index> {
+        options.max_dbs(25);
+        let env = options.open(path)?;
+        Self::new_with_env_and_dates(env, created_at, updated_at)
+    }
+
+    pub fn new_with_env(env: heed::Env) -> Result<Index> {
+        let now = OffsetDateTime::now_utc();
+        Self::new_with_env_and_dates(env, now, now)
+    }
+
+    pub fn new_with_env_and_dates(
+        env: heed::Env,
+        created_at: OffsetDateTime,
+        updated_at: OffsetDateTime,
+    ) -> Result<Index> {
         use db_name::*;
 
-        options.max_dbs(25);
-
-        let env = options.open(path)?;
         let mut wtxn = env.write_txn()?;
         let main = env.database_options().name(MAIN).create(&mut wtxn)?;
         let word_docids = env.create_database(&mut wtxn, Some(WORD_DOCIDS))?;
